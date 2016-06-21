@@ -157,6 +157,10 @@ void doRun(workList waitingList,workList runningList)
             else if(pid==0)
             {
                // system(work->buffer);
+                char pre[]="hadoop jar /usr/Adoop/algocenter.jar ";
+                strcat(pre,work->buffer);
+                printf("做工作 %s\n",pre);
+                system(pre);
                 sleep(10);
                // kill(parentid,SIGUSR1);
                 //发送完成信号
