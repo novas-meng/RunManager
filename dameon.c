@@ -11,7 +11,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
-
+#include "utils.h"
 #define maxProcessCount 3
 typedef unsigned char Byte;
 enum State{
@@ -149,16 +149,26 @@ void doRun(workList waitingList,workList runningList)
             work->workState=Running;
             enqueue(runningList,work);
             int parentid=getpid();
-            printf("执行,work=%d\n",work);
+            printf("执行,work=%s\n",work->buffer);
             if(pid=fork())
             {
-               runningCount++;
+                printf("增加\n");
+                runningCount++;
             }
             else if(pid==0)
             {
                // system(work->buffer);
-                char pre[]="hadoop jar /usr/Adoop/algocenter.jar ";
+                char* path=getEnv("NOVAS_HOME");
+                char* temp=(char*)malloc(100);
+                strcpy(temp,path);
+                strcat(path,"/jar/algocenter.jar ");
+                char pre[]="hadoop jar ";
+                strcat(pre,path);
                 strcat(pre,work->buffer);
+                printf("p=%s\n",pre);
+                char *p=getLogPath(work->timestamp,temp);
+                strcat(pre," 2>");
+                strcat(pre,p);
                 printf("做工作 %s\n",pre);
                 system(pre);
                 sleep(10);
@@ -283,8 +293,26 @@ void sendAcceptOk(int fd)
     fsync(fd);
  //   close(fd);
 }
+//启动属性服务
+int startConfManager(int port)
+{
+    char *ip=getIp();
+    char portstr[10];
+    sprintf(portstr,"%d",port);
+    char *p=getEnv("NOVAS_HOME");
+    strcat(p,"/jar/confmanager.jar ");
+    strcat(p,ip);
+    strcat(p," ");
+    strcat(p,portstr);
+    char cmd[100];
+    strcpy(cmd,"java -jar ");
+    strcat(cmd,p);
+    printf("cmd=%s\n",cmd);
+   // popen(cmd,"r");
+}
 int main()
 {
+    startConfManager(9081);
     init(&waitingList);
     init(&runningList);
    // signal(SIGUSR1,handle);
